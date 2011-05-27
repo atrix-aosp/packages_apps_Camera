@@ -690,6 +690,9 @@ public class VideoCamera extends NoSearchActivity
         Util.setCameraDisplayOrientation(this, mCameraId, mCameraDevice);
         setCameraParameters();
 
+        // Enable higher framerate recording on some tegra 2 devices
+        CameraSettings.enableHighFrameRateFHD(mParameters);
+
         try {
             mCameraDevice.startPreview();
             mPreviewing = true;

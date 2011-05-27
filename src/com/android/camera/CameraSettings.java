@@ -26,6 +26,8 @@ import android.hardware.Camera.Size;
 import android.media.CamcorderProfile;
 import android.util.Log;
 
+import com.android.camera.R;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,6 +77,8 @@ public class CameraSettings {
     private final Context mContext;
     private final Parameters mParameters;
     private final CameraInfo[] mCameraInfo;
+    // Nvidia 1080p high framerate
+    private static boolean mSupportsNvHFR;
 
     public CameraSettings(Activity activity, Parameters parameters,
                           CameraInfo[] cameraInfo) {
@@ -250,6 +254,8 @@ public class CameraSettings {
         cameraId.setEntryValues(entryValues);
         cameraId.setIconIds(iconIds);
         cameraId.setLargeIconIds(largeIconIds);
+
+        mSupportsNvHFR = mContext.getResources().getBoolean(R.bool.supportsNvHighBitrateFullHD);
     }
 
     private static boolean removePreference(PreferenceGroup group, String key) {
@@ -389,4 +395,27 @@ public class CameraSettings {
         editor.putString(KEY_CAMERA_ID, Integer.toString(cameraId));
         editor.apply();
     }
+
+    private static boolean isNVCamera(Parameters params) {
+        return params.get("nv-mode-hint") != null;
+    }
+
+    /**
+     * Changes nv-sensor-mode to enable higher framerate video recording 
+     * for some tegra 2 devices
+     *
+     * @param params
+     */
+    public static void enableHighFrameRateFHD(Parameters params) {
+        if (!mSupportsNvHFR || !isNVCamera(params))
+            return;
+        Log.v(TAG,"Enabling 1080p@30fps on nvcamera");
+        // Not listed as a supported parameter, force it
+        params.set("nv-sensor-mode", "3264x1224x30"); 
+        // Default is 1600x1200, which causes nv-sensor-mode to be 
+        // reset to 3264x2448x15 when attempting Full HD recording.
+        params.setPreviewSize(1280, 720); 
+        params.set("preview-frame-rate", "30"); 
+    }
+
 }
